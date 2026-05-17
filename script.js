@@ -1,5 +1,4 @@
 // --- STATE MANAGEMENT ---
-// Mengambil data dari localStorage, atau menggunakan default
 let posts = JSON.parse(localStorage.getItem('posts')) || [];
 
 let profile = JSON.parse(localStorage.getItem('profile')) || {
@@ -12,7 +11,6 @@ let profile = JSON.parse(localStorage.getItem('profile')) || {
 document.addEventListener('DOMContentLoaded', () => {
     navigate('home');
     loadProfileData();
-    // Tambahkan animasi saat load
     document.querySelectorAll('.animate-on-load').forEach(el => {
         el.style.opacity = 0;
         el.style.transform = "translateY(20px)";
@@ -26,30 +24,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- NAVIGASI ---
 function navigate(pageId) {
-    // Sembunyikan semua halaman
-    document.querySelectorAll('.page').forEach(page => {
-        page.classList.remove('active');
-    });
-    
-    // Tampilkan halaman yang dipilih
-    const selectedPage = document.getElementById(`${pageId}-page`);
-    selectedPage.classList.add('active');
+    document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+    document.getElementById(`${pageId}-page`).classList.add('active');
 
-    // Render data sesuai halaman
     if (pageId === 'home') renderHome();
     if (pageId === 'library') renderLibrary();
 
-    // Perbarui status link navigasi
     updateNavLinks(pageId);
 }
 
-// Perbarui link navigasi aktif
 function updateNavLinks(pageId) {
     document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active');
-        if (link.innerText.toLowerCase() === pageId) {
-            link.classList.add('active');
-        }
+        if (link.innerText.toLowerCase() === pageId) link.classList.add('active');
     });
 }
 
@@ -63,17 +50,19 @@ function renderHome() {
         return;
     }
 
-    // Urutkan dari yang terbaru
     const sortedPosts = [...posts].reverse();
 
     sortedPosts.forEach((post, index) => {
         const card = document.createElement('div');
         card.className = 'card';
-        card.style.animationDelay = `${index * 0.1}s`; // Delay animasi agar muncul bergantian
+        card.style.animationDelay = `${index * 0.1}s`;
         card.onclick = () => viewArticle(post.id);
         
-        // Memotong konten agar menjadi preview singkat
-        const preview = post.content.length > 120 ? post.content.substring(0, 120) + '...' : post.content;
+        // Membersihkan tag HTML dari konten untuk preview di halaman Home
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = post.content;
+        const plainText = tempDiv.innerText || tempDiv.textContent;
+        const preview = plainText.length > 130 ? plainText.substring(0, 130) + '...' : plainText;
 
         card.innerHTML = `
             <h2 class="card-title">${post.title}</h2>
@@ -94,7 +83,9 @@ function viewArticle(id) {
     document.getElementById('view-title').innerText = post.title;
     document.getElementById('view-date').innerText = `Diterbitkan pada ${post.date}`;
     document.getElementById('view-author').innerText = `oleh ${profile.username}`;
-    document.getElementById('view-content').innerText = post.content;
+    
+    // Menggunakan innerHTML agar tag <b> dan <img> bisa di-render
+    document.getElementById('view-content').innerHTML = post.content;
 
     navigate('view');
 }
@@ -112,7 +103,7 @@ function renderLibrary() {
     posts.forEach((post, index) => {
         const item = document.createElement('div');
         item.className = 'library-item fade-in-up';
-        item.style.animationDelay = `${index * 0.05}s`; // Delay animasi lebih singkat
+        item.style.animationDelay = `${index * 0.05}s`;
         item.innerHTML = `
             <div>
                 <h3 style="font-size: 18px; margin-bottom: 6px;">${post.title}</h3>
@@ -127,64 +118,90 @@ function renderLibrary() {
     });
 }
 
-// --- FITUR EDITOR (Buat/Edit) ---
+// --- FITUR EDITOR & RICH TEXT ---
+
+// Fungsi memformat teks (Bold)
+function formatText(command) {
+    document.execCommand(command, false, null);
+    document.getElementById('post-content-input').focus();
+}
+
+// Fungsi menyisipkan gambar ke dalam editor
+function insertImage(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const base64Image = e.target.result;
+            // Fokus kembali ke editor lalu sisipkan tag <img>
+            document.getElementById('post-content-input').focus();
+            document.execCommand('insertImage', false, base64Image);
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
 function openEditor(id = null) {
     const titleInput = document.getElementById('post-title-input');
-    const contentInput = document.getElementById('post-content-input');
+    const contentEditor = document.getElementById('post-content-input');
     const idInput = document.getElementById('edit-id');
     const headerTitle = document.getElementById('editor-title');
 
     if (id) {
-        // Mode Edit
         const post = posts.find(p => p.id === id);
         titleInput.value = post.title;
-        contentInput.value = post.content;
+        contentEditor.innerHTML = post.content; // Render HTML di editor
         idInput.value = post.id;
         headerTitle.innerText = "Edit Artikel";
     } else {
-        // Mode Buat Baru
         titleInput.value = '';
-        contentInput.value = '';
+        contentEditor.innerHTML = '';
         idInput.value = '';
         headerTitle.innerText = "Tulis Artikel Baru";
     }
 
     navigate('editor');
-    // Tambahkan animasi pada input
-    document.querySelectorAll('.animate-input').forEach(input => {
-        input.classList.add('fade-in-up');
-    });
+    document.querySelectorAll('.animate-input').forEach(input => input.classList.add('fade-in-up'));
 }
 
 function saveArticle(e) {
     e.preventDefault();
     const id = document.getElementById('edit-id').value;
     const title = document.getElementById('post-title-input').value;
-    const content = document.getElementById('post-content-input').value;
+    // Mengambil seluruh HTML (termasuk tag bold dan img) dari div
+    const content = document.getElementById('post-content-input').innerHTML; 
+    
+    // Validasi kosong (karena div contenteditable bisa saja hanya berisi spasi/tag kosong)
+    if (!content.trim() || content === '<br>') {
+        alert("Konten artikel tidak boleh kosong!");
+        return;
+    }
+
     const date = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
 
     if (id) {
-        // Update artikel lama
         const index = posts.findIndex(p => p.id == id);
         posts[index].title = title;
         posts[index].content = content;
     } else {
-        // Buat artikel baru
         posts.push({
-            id: Date.now(), // Unique ID
+            id: Date.now(),
             title: title,
             content: content,
             date: date
         });
     }
 
-    localStorage.setItem('posts', JSON.stringify(posts));
-    navigate('library');
+    try {
+        localStorage.setItem('posts', JSON.stringify(posts));
+        navigate('library');
+    } catch (e) {
+        // Peringatan jika Local Storage penuh (karena gambar base64 bisa memakan ukuran yang lumayan)
+        alert("Gagal menyimpan artikel. Gambar mungkin terlalu besar untuk Local Storage browser.");
+    }
 }
 
-function editArticle(id) {
-    openEditor(id);
-}
+function editArticle(id) { openEditor(id); }
 
 function deleteArticle(id) {
     if(confirm("Apakah Anda yakin ingin menghapus artikel ini?")) {
@@ -205,10 +222,8 @@ function saveProfile(e) {
     e.preventDefault();
     profile.username = document.getElementById('profile-username').value;
     profile.bio = document.getElementById('profile-bio').value;
-    
     localStorage.setItem('profile', JSON.stringify(profile));
     alert('Profil berhasil disimpan!');
-    // Render ulang home untuk memperbarui nama penulis
     renderHome();
 }
 
@@ -217,14 +232,10 @@ function uploadAvatar(e) {
     if (file) {
         const reader = new FileReader();
         reader.onload = function(event) {
-            // Menyimpan gambar sebagai string Base64
             const base64String = event.target.result;
             profile.avatar = base64String;
             document.getElementById('profile-avatar').src = base64String;
-            
-            // Auto save
             localStorage.setItem('profile', JSON.stringify(profile));
-            // Render ulang home untuk memperbarui nama penulis
             renderHome();
         };
         reader.readAsDataURL(file);

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern Minimalist Blog</title>
-    <!-- Font Google: Poppins untuk modernitas -->
+    <!-- Font Google: Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -50,6 +50,7 @@
                     <span id="view-date" class="meta-text">Tanggal</span>
                     <span id="view-author" class="meta-text">Penulis</span>
                 </div>
+                <!-- Tempat konten artikel dirender -->
                 <div id="view-content" class="article-body"></div>
             </article>
         </section>
@@ -63,9 +64,19 @@
                 <div class="form-group">
                     <input type="text" id="post-title-input" placeholder="Judul Artikel..." required class="animate-input">
                 </div>
+                
+                <!-- Rich Text Editor Custom -->
                 <div class="form-group">
-                    <textarea id="post-content-input" placeholder="Tulis cerita Anda di sini..." rows="12" required class="animate-input"></textarea>
+                    <div class="editor-toolbar animate-input">
+                        <button type="button" class="btn-toolbar" onclick="formatText('bold')"><b>B</b> Bold</button>
+                        <button type="button" class="btn-toolbar" onclick="document.getElementById('article-image-input').click()">🖼️ Gambar</button>
+                        <!-- Input file tersembunyi untuk gambar artikel -->
+                        <input type="file" id="article-image-input" accept="image/*" style="display: none;" onchange="insertImage(event)">
+                    </div>
+                    <!-- Div ini menggantikan textarea -->
+                    <div id="post-content-input" class="editor-content animate-input" contenteditable="true" data-placeholder="Tulis cerita Anda di sini..."></div>
                 </div>
+
                 <button type="submit" class="btn btn-primary animate-pop">Publish Artikel</button>
             </form>
         </section>
