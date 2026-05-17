@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Minimalist Blog</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigasi -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <div class="logo" onclick="navigate('home')">Blog.</div>
+            <ul class="nav-links">
+                <li><a href="#" onclick="navigate('home')">Home</a></li>
+                <li><a href="#" onclick="navigate('library')">Library</a></li>
+                <li><a href="#" onclick="navigate('profile')">Profile</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Kontainer Utama -->
+    <main class="container">
+        
+        <!-- HALAMAN: HOME (Daftar Artikel) -->
+        <section id="home-page" class="page active">
+            <h1 class="page-title">Feed Terbaru</h1>
+            <div id="home-posts" class="post-grid"></div>
+        </section>
+
+        <!-- HALAMAN: LIBRARY (Manajemen Artikel) -->
+        <section id="library-page" class="page">
+            <div class="library-header">
+                <h1 class="page-title">Karya Anda</h1>
+                <button class="btn btn-primary" onclick="openEditor()">+ Tulis Artikel</button>
+            </div>
+            <div id="library-posts" class="post-list"></div>
+        </section>
+
+        <!-- HALAMAN: BACA ARTIKEL -->
+        <section id="view-page" class="page">
+            <button class="btn btn-back" onclick="navigate('home')">&larr; Kembali</button>
+            <article class="full-article">
+                <h1 id="view-title">Judul Artikel</h1>
+                <span id="view-date" class="meta-text">Tanggal</span>
+                <div id="view-content" class="article-body"></div>
+            </article>
+        </section>
+
+        <!-- HALAMAN: EDITOR (Buat/Edit) -->
+        <section id="editor-page" class="page">
+            <button class="btn btn-back" onclick="navigate('library')">&larr; Batal</button>
+            <h1 class="page-title" id="editor-title">Tulis Artikel Baru</h1>
+            <form id="editor-form" onsubmit="saveArticle(event)">
+                <input type="hidden" id="edit-id">
+                <div class="form-group">
+                    <input type="text" id="post-title-input" placeholder="Judul Artikel..." required>
+                </div>
+                <div class="form-group">
+                    <textarea id="post-content-input" placeholder="Tulis cerita Anda di sini..." rows="12" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Publish Artikel</button>
+            </form>
+        </section>
+
+        <!-- HALAMAN: PROFILE -->
+        <section id="profile-page" class="page">
+            <h1 class="page-title">Profil Anda</h1>
+            <div class="profile-card">
+                <div class="profile-header">
+                    <div class="avatar-wrapper">
+                        <img id="profile-avatar" src="" alt="Avatar">
+                        <input type="file" id="avatar-input" accept="image/*" onchange="uploadAvatar(event)">
+                        <label for="avatar-input" class="avatar-label">Ubah Foto</label>
+                    </div>
+                </div>
+                <form id="profile-form" onsubmit="saveProfile(event)">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="profile-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Bio</label>
+                        <textarea id="profile-bio" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Simpan Profil</button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>
