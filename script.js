@@ -12,6 +12,16 @@ let profile = JSON.parse(localStorage.getItem('profile')) || {
 document.addEventListener('DOMContentLoaded', () => {
     navigate('home');
     loadProfileData();
+    // Tambahkan animasi saat load
+    document.querySelectorAll('.animate-on-load').forEach(el => {
+        el.style.opacity = 0;
+        el.style.transform = "translateY(20px)";
+        setTimeout(() => {
+            el.style.transition = "transform 0.4s ease, opacity 0.4s ease";
+            el.style.transform = "translateY(0)";
+            el.style.opacity = 1;
+        }, 100);
+    });
 });
 
 // --- NAVIGASI ---
@@ -22,11 +32,25 @@ function navigate(pageId) {
     });
     
     // Tampilkan halaman yang dipilih
-    document.getElementById(`${pageId}-page`).classList.add('active');
+    const selectedPage = document.getElementById(`${pageId}-page`);
+    selectedPage.classList.add('active');
 
     // Render data sesuai halaman
     if (pageId === 'home') renderHome();
     if (pageId === 'library') renderLibrary();
+
+    // Perbarui status link navigasi
+    updateNavLinks(pageId);
+}
+
+// Perbarui link navigasi aktif
+function updateNavLinks(pageId) {
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+        if (link.innerText.toLowerCase() === pageId) {
+            link.classList.add('active');
+        }
+    });
 }
 
 // --- FITUR HOME ---
@@ -35,16 +59,17 @@ function renderHome() {
     container.innerHTML = '';
 
     if (posts.length === 0) {
-        container.innerHTML = '<p class="meta-text">Belum ada artikel yang dipublikasikan.</p>';
+        container.innerHTML = '<p class="meta-text fade-in-up">Belum ada artikel yang dipublikasikan.</p>';
         return;
     }
 
     // Urutkan dari yang terbaru
     const sortedPosts = [...posts].reverse();
 
-    sortedPosts.forEach(post => {
+    sortedPosts.forEach((post, index) => {
         const card = document.createElement('div');
         card.className = 'card';
+        card.style.animationDelay = `${index * 0.1}s`; // Delay animasi agar muncul bergantian
         card.onclick = () => viewArticle(post.id);
         
         // Memotong konten agar menjadi preview singkat
@@ -52,7 +77,9 @@ function renderHome() {
 
         card.innerHTML = `
             <h2 class="card-title">${post.title}</h2>
-            <p class="meta-text" style="margin-bottom: 12px;">Oleh: ${profile.username} &bull; ${post.date}</p>
+            <div class="article-meta meta-text">
+                Oleh: ${profile.username} &bull; ${post.date}
+            </div>
             <p>${preview}</p>
         `;
         container.appendChild(card);
@@ -65,7 +92,8 @@ function viewArticle(id) {
     if (!post) return;
 
     document.getElementById('view-title').innerText = post.title;
-    document.getElementById('view-date').innerText = `Diterbitkan pada ${post.date} oleh ${profile.username}`;
+    document.getElementById('view-date').innerText = `Diterbitkan pada ${post.date}`;
+    document.getElementById('view-author').innerText = `oleh ${profile.username}`;
     document.getElementById('view-content').innerText = post.content;
 
     navigate('view');
@@ -77,16 +105,17 @@ function renderLibrary() {
     container.innerHTML = '';
 
     if (posts.length === 0) {
-        container.innerHTML = '<p class="meta-text">Library kosong. Mulai tulis artikel pertama Anda.</p>';
+        container.innerHTML = '<p class="meta-text fade-in-up">Library kosong. Mulai tulis artikel pertama Anda.</p>';
         return;
     }
 
-    posts.forEach(post => {
+    posts.forEach((post, index) => {
         const item = document.createElement('div');
-        item.className = 'library-item';
+        item.className = 'library-item fade-in-up';
+        item.style.animationDelay = `${index * 0.05}s`; // Delay animasi lebih singkat
         item.innerHTML = `
             <div>
-                <h3 style="font-size: 16px; margin-bottom: 4px;">${post.title}</h3>
+                <h3 style="font-size: 18px; margin-bottom: 6px;">${post.title}</h3>
                 <span class="meta-text">${post.date}</span>
             </div>
             <div class="library-actions">
@@ -121,6 +150,10 @@ function openEditor(id = null) {
     }
 
     navigate('editor');
+    // Tambahkan animasi pada input
+    document.querySelectorAll('.animate-input').forEach(input => {
+        input.classList.add('fade-in-up');
+    });
 }
 
 function saveArticle(e) {
@@ -175,6 +208,8 @@ function saveProfile(e) {
     
     localStorage.setItem('profile', JSON.stringify(profile));
     alert('Profil berhasil disimpan!');
+    // Render ulang home untuk memperbarui nama penulis
+    renderHome();
 }
 
 function uploadAvatar(e) {
@@ -189,6 +224,8 @@ function uploadAvatar(e) {
             
             // Auto save
             localStorage.setItem('profile', JSON.stringify(profile));
+            // Render ulang home untuk memperbarui nama penulis
+            renderHome();
         };
         reader.readAsDataURL(file);
     }
